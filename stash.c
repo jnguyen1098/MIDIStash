@@ -64,18 +64,51 @@ int operate_midi(FILE *midifile, FILE *binaryfile)
     char str[] = {'M', 'T', 'r', 'k', '\0'};
     fputs(str, midifile);
 
+    size_t chunklen = 4 + 4;
+
     unsigned char vlv[5] = { 0 };
     fseek(binaryfile, 0, SEEK_END);
     unsigned long binaryfile_size = ftell(binaryfile);
     size_t num_bytes = write_vlv(binaryfile_size, vlv);
+
+    chunklen += num_bytes;
+    chunklen += binaryfile_size;
+    unsigned char vlv2[5] = { 0 };
+    printf("chunklen is %lu\n", chunklen);
+    size_t meta_bytes = write_vlv(chunklen, vlv2);
+    for (size_t i = 0; i < 4 - meta_bytes; i++)
+        fputc(0x00, midifile);
+    for (size_t i = 0; i < meta_bytes; i++)
+        fputc((char)vlv2[i], midifile);
+
     rewind(binaryfile);
+
+    char start_of_text_event[] = {0xFF, 0x01, 0x00};
+    fputc(0x0, midifile);
+    fputs(start_of_text_event, midifile);
+
     for (size_t i = 0; i < num_bytes; i++) {
         printf("byte: %x\n", vlv[i]);
         fputc((char)vlv[i], midifile);
     }
 
+    // write bytes here
+    for (;;) {
+        char c = fgetc(binaryfile);
+        if (c == EOF) break;
+        fputc(c, midifile);
+    }
+
+    char end_of_track_event[] = {0xFF, 0x2F, 0x00, 0x00};
+    fputc(0x0, midifile);
+    fputs(end_of_track_event, midifile);
+    fputc(0x0, midifile);
+
     rewind(midifile);
     return 1;
+
+    // 00 FF 01 1A => start of text event
+    // 00 FF 2F 00 => end of track event
 }
 
 int main(int argc, char *argv[])
