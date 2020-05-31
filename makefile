@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wpedantic -Wextra -ggdb
+CFLAGS = -std=c99 -Wall -Wpedantic -Wextra -ggdb
 VFLAGS = --leak-check=full --show-leak-kinds=all --track-origins=yes
 
 .PHONY = run clean
