@@ -113,34 +113,17 @@ int operate_midi(FILE *midifile, FILE *binaryfile)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1)
-        return fprintf(stderr, "Usage: %s midifile [binaryfile]\n", argv[0]), 1;
+    if (argc != 3)
+        return fprintf(stderr, "Usage: %s midifile binaryfile\n", argv[0]), 1;
 
-    // decrypt
-    if (argc == 2) {
-        FILE *midifile;
-        if (!(midifile = fopen(argv[1], "r")))
-            return fprintf(stderr, "File error\n"), 2;
+    FILE *midifile, *binaryfile;
+    if (!(midifile = fopen(argv[1], "r+")) || !(binaryfile = fopen(argv[2], "r")))
+        return fprintf(stderr, "File error\n"), 2;
 
-        // 
+    if (!operate_midi(midifile, binaryfile))
+        return fprintf(stderr, "Invalid MIDI\n"), 3;
 
-        fclose(midifile);
-        return 0;
-    }
-
-    // encrypt
-    else if (argc == 3) {
-        FILE *midifile, *binaryfile;
-        if (!(midifile = fopen(argv[1], "r+")) || !(binaryfile = fopen(argv[2], "r")))
-            return fprintf(stderr, "File error\n"), 2;
-
-        if (!operate_midi(midifile, binaryfile))
-            return fprintf(stderr, "Invalid MIDI\n"), 3;
-
-        fclose(midifile);
-        fclose(binaryfile);
-        return 0;
-    }
-
-    return fprintf(stderr, "Usage: %s midifile [binaryfile]\n", argv[0]);
+    fclose(midifile);
+    fclose(binaryfile);
+    return 0;
 }
